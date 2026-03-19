@@ -1,0 +1,6 @@
+@Sh.LiveWebSocket.Hub_HostAddress = http://localhost:5014
+
+GET {{Sh.LiveWebSocket.Hub_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
