@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using Sh.LiveWebSocket.MessageHub.Models.Identifiers;
 using Sh.LiveWebSocket.MessageHub.Services.Abstractions;
 
 namespace Sh.LiveWebSocket.MessageHub.Hubs;
@@ -8,9 +9,9 @@ public sealed class MatchHub : Hub
     public const string Notifications = "notifications";
     public const string MatchUpdate = "match-update";
 
-    private readonly IConnectionStore _connectionStore;
+    private readonly IMatchConnectionStore _connectionStore;
 
-    public MatchHub(IConnectionStore connectionStore)
+    public MatchHub(IMatchConnectionStore connectionStore)
     {
         _connectionStore = connectionStore;
     }
@@ -21,9 +22,9 @@ public sealed class MatchHub : Hub
         var siteId = httpContext?.Request.Query["siteId"] ?? throw new ArgumentException("siteId");
         var lang = httpContext?.Request.Query["lang"] ?? throw new ArgumentException("lang");
 
-        var groupName = GetGroupName(siteId.ToString(), lang.ToString());
+        var groupName = new MatchGroupName(lang.ToString(), int.Parse(siteId.ToString()));
 
-        await Groups.AddToGroupAsync(Context.ConnectionId, groupName, Context.ConnectionAborted);
+        await Groups.AddToGroupAsync(Context.ConnectionId, groupName.ToString(), Context.ConnectionAborted);
         await base.OnConnectedAsync();
 
         await Clients.Caller.SendAsync(Notifications, $"You joined to group '{groupName}'.", Context.ConnectionAborted);
@@ -46,10 +47,9 @@ public sealed class MatchHub : Hub
         await base.OnDisconnectedAsync(exception);
     }
 
-    public async Task ChangeLanguage(string siteId, string language)
+    public async Task ChangeLanguage(int siteId, string language)
     {
-        var groupName = GetGroupName(siteId, language);
-
+        var groupName = new MatchGroupName(language, siteId);
         var oldGroup = await _connectionStore.GetConnectionGroupAsync(Context.ConnectionId);
 
         if (!string.IsNullOrEmpty(oldGroup))
@@ -57,12 +57,10 @@ public sealed class MatchHub : Hub
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, oldGroup, Context.ConnectionAborted);
         }
 
-        await Groups.AddToGroupAsync(Context.ConnectionId, groupName, Context.ConnectionAborted);
+        await Groups.AddToGroupAsync(Context.ConnectionId, groupName.ToString(), Context.ConnectionAborted);
 
         await _connectionStore.MoveConnectionToGroupAsync(Context.ConnectionId, groupName);
         
         await Clients.Caller.SendAsync(Notifications, $"You joined to group '{groupName}'.", Context.ConnectionAborted);
     }
-
-    private static string GetGroupName(string siteId, string language) => $"{siteId}-{language}";
 }

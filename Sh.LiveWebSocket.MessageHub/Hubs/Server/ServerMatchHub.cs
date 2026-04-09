@@ -13,7 +13,7 @@ public sealed class ServerMatchHub : Hub
         _matchHubNotificationService = matchHubNotificationService;
     }
 
-    public async Task MatchUpdates(Dictionary<string, List<MatchMarketModel>> matches)
+    public async Task MatchUpdates(Dictionary<string, MatchMarketOdds> matches)
     {
        await _matchHubNotificationService.SendMessagesAsync(matches);
     }

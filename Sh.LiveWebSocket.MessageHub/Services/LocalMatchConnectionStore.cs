@@ -1,16 +1,22 @@
-﻿using Sh.LiveWebSocket.MessageHub.Services.Abstractions;
+﻿using Sh.LiveWebSocket.MessageHub.Models.Identifiers;
+using Sh.LiveWebSocket.MessageHub.Services.Abstractions;
 using System.Collections.Concurrent;
 
 namespace Sh.LiveWebSocket.MessageHub.Services;
 
-public sealed class LocalConnectionStore : IConnectionStore
+public sealed class LocalMatchConnectionStore : IMatchConnectionStore
 {
     private readonly ConcurrentDictionary<string, string> _connectionGroup = new();
 
-    public ValueTask AddConnectionToGroupAsync(string connectionId, string groupName)
+    public ValueTask AddConnectionToGroupAsync(string connectionId, MatchGroupName groupName)
     {
-        _connectionGroup.TryAdd(connectionId, groupName);
+        _connectionGroup.TryAdd(connectionId, groupName.ToString());
         return ValueTask.CompletedTask;
+    }
+
+    public ValueTask<HashSet<string>> GetAllConnectionGroupsAsync()
+    {
+        return ValueTask.FromResult(new HashSet<string>(_connectionGroup.Values));
     }
 
     public ValueTask<string?> GetConnectionGroupAsync(string connectionId)
@@ -25,7 +31,7 @@ public sealed class LocalConnectionStore : IConnectionStore
         return ValueTask.FromResult(groupName);
     }
 
-    public async ValueTask MoveConnectionToGroupAsync(string connectionId, string newGroupName)
+    public async ValueTask MoveConnectionToGroupAsync(string connectionId, MatchGroupName newGroupName)
     {
         var currentGroup = await GetConnectionGroupAsync(connectionId);
 
