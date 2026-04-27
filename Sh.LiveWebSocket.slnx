@@ -1,3 +1,8 @@
 <Solution>
+  <Folder Name="/Shared/">
+    <Project Path="../ShSharedLibraries/Sh.Cache.Redis/Sh.Cache.Redis.csproj" />
+    <Project Path="../ShSharedLibraries/Sh.Odds.Contracts/Sh.Odds.Contracts.csproj" />
+    <Project Path="../ShSharedLibraries/Sh.Odds.Service/Sh.Odds.Service.csproj" />
+  </Folder>
   <Project Path="Sh.LiveWebSocket.MessageHub/Sh.LiveWebSocket.MessageHub.csproj" Id="a6b4f864-a859-466d-bb1b-6cab38a74092" />
 </Solution>

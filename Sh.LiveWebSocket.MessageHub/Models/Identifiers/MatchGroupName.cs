@@ -10,11 +10,17 @@ public struct MatchGroupName : IEquatable<MatchGroupName>
 
     public int SiteId { get; set; }
 
-    public MatchGroupName(string language, int siteId)
+    public int? MatchId { get; set; }
+
+    public MatchGroupName(string language, int siteId, int? matchId = null)
     {
         Language = language;
         SiteId = siteId;
-        Name = $"{Channel}-{Language}-{SiteId}";
+        MatchId = matchId;
+
+        var matchIdPart = matchId.HasValue ? matchId.ToString() : "*";
+
+        Name = $"{Channel}-{matchIdPart}-{Language}-{SiteId}";
     }
 
     public bool Equals(MatchGroupName other)
@@ -23,4 +29,6 @@ public struct MatchGroupName : IEquatable<MatchGroupName>
     }
 
     public override string ToString() => Name;
+
+    public bool IsSingeMatchGroup() => MatchId.HasValue;
 }

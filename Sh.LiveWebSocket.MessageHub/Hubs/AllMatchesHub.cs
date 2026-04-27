@@ -4,15 +4,15 @@ using Sh.LiveWebSocket.MessageHub.Services.Abstractions;
 
 namespace Sh.LiveWebSocket.MessageHub.Hubs;
 
-public class MatchHub : Hub
+public sealed class AllMatchesHub : Hub
 {
     public const string Notifications = "notifications";
-    public const string MatchUpdate = "match-update";
+    public const string AllMatchesUpdate = "all-matches-update";
     public const string DisableOdds = "disable-odds";
 
     private readonly IMatchConnectionStore _connectionStore;
 
-    public MatchHub(IMatchConnectionStore connectionStore)
+    public AllMatchesHub(IMatchConnectionStore connectionStore)
     {
         _connectionStore = connectionStore;
     }
@@ -22,9 +22,8 @@ public class MatchHub : Hub
         var httpContext = Context.GetHttpContext();
         var siteId = httpContext?.Request.Query["siteId"] ?? throw new ArgumentException("siteId");
         var lang = httpContext?.Request.Query["lang"] ?? throw new ArgumentException("lang");
-        var matchId = httpContext?.Request.Query["matchId"] ?? throw new ArgumentException("matchId");
 
-        var groupName = new MatchGroupName(lang.ToString(), int.Parse(siteId.ToString()), int.Parse(matchId.ToString()));
+        var groupName = new MatchGroupName(lang.ToString(), int.Parse(siteId.ToString()));
 
         await Groups.AddToGroupAsync(Context.ConnectionId, groupName.ToString(), Context.ConnectionAborted);
         await base.OnConnectedAsync();
@@ -49,9 +48,9 @@ public class MatchHub : Hub
         await base.OnDisconnectedAsync(exception);
     }
 
-    public async Task ChangeLanguage(int siteId, string language, int matchId)
+    public async Task ChangeLanguage(int siteId, string language)
     {
-        var groupName = new MatchGroupName(language, siteId, matchId);
+        var groupName = new MatchGroupName(language, siteId);
         var oldGroup = await _connectionStore.GetConnectionGroupAsync(Context.ConnectionId);
 
         if (!string.IsNullOrEmpty(oldGroup))
@@ -62,7 +61,7 @@ public class MatchHub : Hub
         await Groups.AddToGroupAsync(Context.ConnectionId, groupName.ToString(), Context.ConnectionAborted);
 
         await _connectionStore.MoveConnectionToGroupAsync(Context.ConnectionId, groupName);
-
-        await Clients.Caller.SendAsync(Notifications, $"You changed group to '{groupName}'.", Context.ConnectionAborted);
+        
+        await Clients.Caller.SendAsync(Notifications, $"You joined to group '{groupName}'.", Context.ConnectionAborted);
     }
 }

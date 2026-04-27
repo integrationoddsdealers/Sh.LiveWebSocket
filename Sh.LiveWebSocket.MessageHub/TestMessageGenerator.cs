@@ -2,7 +2,7 @@
 using Sh.LiveWebSocket.MessageHub.Hubs;
 using Sh.LiveWebSocket.MessageHub.Messages.Translated;
 using Sh.LiveWebSocket.MessageHub.Models.Identifiers;
-using Sh.PandaScore.WebSockets.Messages.Translated;
+using Sh.Odds.Service.Controller.WebSocket.Live;
 
 namespace Sh.LiveWebSocket.MessageHub;
 
@@ -10,11 +10,13 @@ public class TestMessageGenerator : BackgroundService
 {
     public static string[] AvailableLanguages = ["en", "it", "es", "fr", "de"];
 
-    private readonly IHubContext<MatchHub> _hubContext;
+    private readonly IHubContext<AllMatchesHub> _hubContext;
+    private readonly LiveWebSocketController _liveWebSocketController;
 
-    public TestMessageGenerator(IHubContext<MatchHub> hubContext)
+    public TestMessageGenerator(IHubContext<AllMatchesHub> hubContext, LiveWebSocketController liveWebSocketController)
     {
         _hubContext = hubContext;
+        _liveWebSocketController = liveWebSocketController;
     }
 
 
@@ -99,8 +101,17 @@ public class TestMessageGenerator : BackgroundService
                 var groupName = new MatchGroupName(kvp.Key, 1);
                 var matchMarkets = kvp.Value;
 
-                await _hubContext.Clients.Group(groupName.ToString()).SendAsync(MatchHub.MatchUpdate, matchMarkets);
+                await _hubContext.Clients.Group(groupName.ToString()).SendAsync(AllMatchesHub.AllMatchesUpdate, matchMarkets);
             }
+
+            //_liveWebSocketController.GetWsOddsMessage(
+            //    message.First().Value.Markets.Select(x => x.MarketId),
+            //    message.First().Value.Odds.Select(x => new Odds.Contracts.MongoDb.Live.Odds.LiveOdd
+            //    {
+            //        MarketId = x.MarketId,
+            //        Active= true,
+                    
+            //    }));
 
             await Task.Delay(random.Next(3_000, 10_000), stoppingToken);
         }
